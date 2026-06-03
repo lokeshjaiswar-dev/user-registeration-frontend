@@ -6,7 +6,11 @@ export default function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     email: '', password: '', confirmPassword: '',
-    gender: '', city: '', selected_image: '', education: []
+    gender: '', city: '', selected_image: '', education: [],
+    image1: '', image2: '', image3: '', image4: ''   // new fields
+  });
+  const [imagePreviews, setImagePreviews] = useState({
+    image1: '', image2: '', image3: '', image4: ''
   });
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState('');
@@ -55,17 +59,32 @@ export default function Register() {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
+  // Handle custom image upload for each slot (1-4)
+  const handleImageUpload = (e, imageKey) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result;
+        setForm(prev => ({ ...prev, [imageKey]: base64String }));
+        setImagePreviews(prev => ({ ...prev, [imageKey]: base64String }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const emailErr = validateEmail(form.email);
     const pwdErr = validatePassword(form.password);
     const confirmErr = validateConfirm(form.confirmPassword, form.password);
     
+    // Validate that at least avatar is selected (custom images optional)
     if (emailErr || pwdErr || confirmErr || !form.gender || !form.city || !form.selected_image || form.education.length === 0) {
       setErrors({ email: emailErr, password: pwdErr, confirmPassword: confirmErr });
       if (!form.gender) setServerError('Please select gender');
       else if (!form.city) setServerError('Please select city');
-      else if (!form.selected_image) setServerError('Please choose a profile image');
+      else if (!form.selected_image) setServerError('Please choose a profile avatar');
       else if (form.education.length === 0) setServerError('Please select at least one education credential');
       else setServerError('Please correct the validation problems highlighted above');
       return;
@@ -79,6 +98,10 @@ export default function Register() {
         gender: form.gender,
         city: form.city,
         selected_image: form.selected_image,
+        image1: form.image1,
+        image2: form.image2,
+        image3: form.image3,
+        image4: form.image4,
         education: form.education.join(',')
       });
       setSuccess('Registration successful! Redirecting to auth center...');
@@ -115,6 +138,7 @@ export default function Register() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Email, password, confirm, gender, city (same as before) */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-1.5">Email Address</label>
             <input 
@@ -205,6 +229,7 @@ export default function Register() {
             </div>
           </div>
 
+          {/* EXISTING AVATAR SECTION – unchanged */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Profile Image Avatar</label>
             <div className="grid grid-cols-4 gap-3">
@@ -236,6 +261,32 @@ export default function Register() {
                       Style {num}
                     </span>
                   </label>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* NEW SECTION: Upload 4 Custom Images */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Additional Images (Optional)</label>
+            <div className="grid grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map(num => {
+                const key = `image${num}`;
+                return (
+                  <div key={num} className="border border-slate-200 rounded-xl p-3 bg-slate-50">
+                    <p className="text-sm font-medium text-slate-700 mb-1">Image {num}</p>
+                    <input 
+                      type="file" 
+                      accept="image/jpeg,image/png,image/gif,image/webp" 
+                      onChange={(e) => handleImageUpload(e, key)}
+                      className="w-full text-sm text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-sm file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                    />
+                    {imagePreviews[key] && (
+                      <div className="mt-2 flex justify-center">
+                        <img src={imagePreviews[key]} alt={`preview ${num}`} className="w-16 h-16 object-cover rounded-lg border border-slate-200 shadow-sm" />
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
