@@ -14,9 +14,7 @@ export default function Login() {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const res = await axios.post(`${API_URL}/api/auth/login`, { email, password });
       localStorage.setItem('token', res.data.token);
-      setTimeout(() => {
-        navigate('/users');
-      }, 100);
+      window.location.href = '/users';
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     }
